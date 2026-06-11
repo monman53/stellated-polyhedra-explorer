@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/stellated-polyhedra-explorer/favicon.png" />
+
+    <title>Stellated Polyhedra Explorer — Stellations of the Icosahedron and More in 3D</title>
+    <meta name="description" content="Interactive WebGL viewer of stellated polyhedra. Explore all 59 stellations of the icosahedron plus the dodecahedron, octahedron, icosidodecahedron, rhombic triacontahedron, truncated icosahedron and more — paint the stellation diagram cell by cell, explode the model into shells, and build your own, free in your browser." />
+    <meta name="keywords" content="stellation, stellated polyhedra, icosahedron, 59 stellations, fifty-nine icosahedra, stellation diagram, great icosahedron, dodecahedron, Kepler-Poinsot, compound polyhedron, Escher's solid, polyhedron, geometry, WebGL, 3D, 星型多面体, 星型二十面体, 正二十面体, 星型化図, 多面体" />
+    <meta name="author" content="monman53" />
+    <link rel="canonical" href="https://monman53.github.io/stellated-polyhedra-explorer/" />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Stellated Polyhedra Explorer" />
+    <meta property="og:description" content="Interactive 3D viewer of stellated polyhedra — all 59 stellations of the icosahedron and eight more solids, with an editable stellation diagram." />
+    <meta property="og:url" content="https://monman53.github.io/stellated-polyhedra-explorer/" />
+    <meta property="og:image" content="https://monman53.github.io/stellated-polyhedra-explorer/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Stellated Polyhedra Explorer",
+      "url": "https://monman53.github.io/stellated-polyhedra-explorer/",
+      "description": "Interactive WebGL viewer of stellated polyhedra: all 59 stellations of the icosahedron and eight more solids (dodecahedron, octahedron, icosidodecahedron, rhombic triacontahedron, truncated icosahedron and others), with an editable stellation diagram.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Any",
+      "author": { "@type": "Person", "name": "monman53", "url": "https://monman53.github.io/" }
+    }
+    </script>
+
+    <!-- Google Analytics (production host only — no counting during development) -->
+    <script>
+      if (location.hostname === 'monman53.github.io') {
+        var gaScript = document.createElement('script');
+        gaScript.async = true;
+        gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-E9ZG1KHTVT';
+        document.head.appendChild(gaScript);
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-E9ZG1KHTVT');
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
