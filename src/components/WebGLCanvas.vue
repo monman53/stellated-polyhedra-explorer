@@ -17,7 +17,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { Renderer, Camera, RenderState, defaultCamera, makeOrbitControls } from '../webgl/renderer'
 import { buildMesh, buildBlockMesh, getBlockData } from '../geometry/stellation'
-import type { PolyId } from '../geometry/icosahedron'
+import type { PolyId } from '../geometry/polyhedra'
 
 const props = defineProps<{
   renderState: RenderState

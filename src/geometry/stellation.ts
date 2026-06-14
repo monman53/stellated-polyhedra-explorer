@@ -1,5 +1,5 @@
 import { Vec2, Vec3, dot3, cross3, sub3, scale3, add3, len2 } from './math'
-import { PolyId, FacePlane, getPolyhedron, buildFacePlanes, project2D, lift3D } from './icosahedron'
+import { PolyId, FacePlane, getPolyhedron, buildFacePlanes, project2D, lift3D } from './polyhedra'
 
 export interface Line2D { a: number; b: number; c: number }
 

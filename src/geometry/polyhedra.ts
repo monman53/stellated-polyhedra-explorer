@@ -1,3 +1,7 @@
+// Geometry of every supported polyhedron: vertices, faces and face planes,
+// plus the 2D⇆3D projection helpers the stellation solver works in. All nine
+// solids are derived from the icosahedron's vertices (ICO_VERTS) — directly,
+// or as duals, rectifications and truncations of it.
 import { Vec3, sub3, cross3, norm3, dot3, scale3, add3, centroid3 } from './math'
 
 export type Face = number[]

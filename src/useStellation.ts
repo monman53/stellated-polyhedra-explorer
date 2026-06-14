@@ -10,8 +10,8 @@ import {
   hslToRgb,
 } from './geometry/presets'
 import type { Preset } from './geometry/presets'
-import { buildFacePlanes } from './geometry/icosahedron'
-import type { PolyId } from './geometry/icosahedron'
+import { buildFacePlanes } from './geometry/polyhedra'
+import type { PolyId } from './geometry/polyhedra'
 import { dot3 } from './geometry/math'
 import type { Background } from './webgl/renderer'
 

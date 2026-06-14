@@ -155,7 +155,7 @@ import { computed } from 'vue'
 import { COLOR_PALETTES } from '../geometry/presets'
 import { SHADER_IDS, EXPERIMENTAL_SHADERS, PALETTE_SHADERS } from '../useStellation'
 import type { ShaderId } from '../useStellation'
-import type { PolyId } from '../geometry/icosahedron'
+import type { PolyId } from '../geometry/polyhedra'
 import type { Background } from '../webgl/renderer'
 
 const props = defineProps<{

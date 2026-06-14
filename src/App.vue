@@ -237,7 +237,7 @@ import PresetPad from './components/PresetPad.vue'
 import FacesPad from './components/FacesPad.vue'
 import { useStellation } from './useStellation'
 import { COLOR_PALETTES } from './geometry/presets'
-import { buildFacePlanes } from './geometry/icosahedron'
+import { buildFacePlanes } from './geometry/polyhedra'
 import type { RenderState } from './webgl/renderer'
 
 const { state, numTypes, numFaces, colors, faceColors, presetNames, matchedPreset, applyPreset, selectAllTypes, toggleHalf, encodeSnapshot, resetAll } = useStellation()

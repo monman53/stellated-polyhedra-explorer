@@ -58,8 +58,8 @@
 import { computed, ref, watch } from 'vue'
 import { getStellationData } from '../geometry/stellation'
 import type { Vec2 } from '../geometry/math'
-import { getPolyhedron, buildFacePlanes, project2D } from '../geometry/icosahedron'
-import type { PolyId } from '../geometry/icosahedron'
+import { getPolyhedron, buildFacePlanes, project2D } from '../geometry/polyhedra'
+import type { PolyId } from '../geometry/polyhedra'
 
 const props = defineProps<{
   poly: PolyId
