@@ -53,7 +53,7 @@ function resolveFaces(faces: number[], faceToType: readonly number[], numTypes: 
   return result
 }
 
-// Resolve a preset's chiral half selections into typeId → required inTetra value.
+// Resolve a preset's chiral half selections into typeId → required mirrorHalf value.
 // The five-tetrahedra face triangle contains the 'R' (chosen-f1) halves of
 // regions 9,10 (f1 tops) and the 'L' halves of regions 5,6 (f1-covered bottoms).
 function resolveHalves(
@@ -67,8 +67,8 @@ function resolveHalves(
     const region = Number(regionStr)
     const t = faceToType[region]
     if (t === undefined || t >= numTypes) continue
-    const wantInTetra = (region === 9 || region === 10) ? h === 'R' : h === 'L'
-    result.set(t, wantInTetra)
+    const wantMirrorHalf = (region === 9 || region === 10) ? h === 'R' : h === 'L'
+    result.set(t, wantMirrorHalf)
   }
   return result
 }
@@ -124,7 +124,7 @@ export function useStellation() {
 
     // Selected cell types (by computed index)
     selectedTypes: new Set<number>([0]) as Set<number>,
-    // Chiral half selections: typeId → required inTetra value. Empty = full orbits.
+    // Chiral half selections: typeId → required mirrorHalf value. Empty = full orbits.
     halfTypes: new Map<number, boolean>() as Map<number, boolean>,
     // Types seen from underneath (primed in the table) — explode with the outer chunk
     primedTypes: new Set<number>() as Set<number>,
@@ -154,7 +154,7 @@ export function useStellation() {
     // Block view: show a bounding cube cut by every face plane — all
     // stellation cells plus the filler pieces that complete the cube.
     // Exploding scatters the pieces, as if the solid were carved out.
-    explodeAll: false,
+    blockView: false,
 
     // Face opacity [0, 1] — below 1 renders X-ray style
     opacity: 1,
@@ -211,8 +211,8 @@ export function useStellation() {
     for (const od of data.value.orbits) {
       for (const c of od.cells) {
         if (seen.has(c.typeId)) {
-          if (seen.get(c.typeId) !== c.inTetra) result.add(c.typeId)
-        } else seen.set(c.typeId, c.inTetra)
+          if (seen.get(c.typeId) !== c.mirrorHalf) result.add(c.typeId)
+        } else seen.set(c.typeId, c.mirrorHalf)
       }
     }
     return result
@@ -283,7 +283,7 @@ export function useStellation() {
 
   // Toggle the clicked half-orbit independently. For splittable types the
   // selection state per type is: none / one half (halfTypes entry) / full.
-  function toggleHalf(typeId: number, inTetra: boolean) {
+  function toggleHalf(typeId: number, mirrorHalf: boolean) {
     const sel = new Set(state.selectedTypes)
     const hm = new Map(state.halfTypes)
     if (!splittableTypes.value.has(typeId)) {
@@ -293,10 +293,10 @@ export function useStellation() {
       hm.delete(typeId)
     } else if (!sel.has(typeId)) {
       sel.add(typeId)                    // none → clicked half on
-      hm.set(typeId, inTetra)
+      hm.set(typeId, mirrorHalf)
     } else if (!hm.has(typeId)) {
-      hm.set(typeId, !inTetra)           // full → clicked half off
-    } else if (hm.get(typeId) === inTetra) {
+      hm.set(typeId, !mirrorHalf)           // full → clicked half off
+    } else if (hm.get(typeId) === mirrorHalf) {
       sel.delete(typeId)                 // selected half clicked → none
       hm.delete(typeId)
     } else {
@@ -334,7 +334,7 @@ export function useStellation() {
       pj: state.projection,
       ex: state.explodeFactor,
       cc: state.closeCells ? 1 : 0,
-      bk: state.explodeAll ? 1 : 0,
+      bk: state.blockView ? 1 : 0,
       op: state.opacity,
       wf: state.wireframe ? 1 : 0,
       cs: state.cropSphere,
@@ -382,7 +382,7 @@ export function useStellation() {
       state.projection = s.pj === 'ortho' ? 'ortho' : 'perspective'
       state.explodeFactor = num(s.ex, 0, 0, 10)
       state.closeCells = !!s.cc
-      state.explodeAll = !!s.bk
+      state.blockView = !!s.bk
       state.opacity = num(s.op, 1, 0, 1)
       state.wireframe = !!s.wf
       state.cropSphere = num(s.cs, 1, 0.02, 1)
@@ -418,7 +418,7 @@ export function useStellation() {
     state.projection = 'perspective'
     state.explodeFactor = 0
     state.closeCells = false
-    state.explodeAll = false
+    state.blockView = false
     state.opacity = 1
     state.wireframe = false
     state.cropSphere = 1

@@ -13,7 +13,7 @@ export interface CellPolygon {
   // and can be selected independently (state.halfTypes). For the icosahedron
   // the flag instead marks membership in the compound-of-five-tetrahedra face
   // triangle — the convention its chiral f1-layer presets are written in.
-  inTetra: boolean
+  mirrorHalf: boolean
 }
 
 // Clip convex polygon by half-plane a*x + b*y >= c
@@ -161,7 +161,7 @@ export function computeCells(lines: Line2D[], bound = BOUNDS): CellPolygon[] {
     if (poly) {
       const cx = poly.reduce((s, p) => s + p[0], 0) / poly.length
       const cy = poly.reduce((s, p) => s + p[1], 0) / poly.length
-      cells.push({ id: id++, typeId: -1, vertices: poly, centroid: [cx, cy], inTetra: false })
+      cells.push({ id: id++, typeId: -1, vertices: poly, centroid: [cx, cy], mirrorHalf: false })
     }
   }
   return cells
@@ -194,7 +194,7 @@ function markTetraTriangle(cells: CellPolygon[]): void {
     return !(neg && pos)
   }
 
-  for (const c of cells) c.inTetra = inTri(c.centroid)
+  for (const c of cells) c.mirrorHalf = inTri(c.centroid)
 }
 
 // Symmetry group of the reference face acting on its plane: candidate
@@ -293,7 +293,7 @@ export function classifyCells(cells: CellPolygon[], lines: Line2D[], ops: number
 // only. A D_k orbit either stays one C_k orbit (achiral) or splits into two
 // suborbits, which are then necessarily mirror images of each other (a
 // reflection-invariant C_k suborbit would itself be a full D_k orbit).
-// The halves get opposite inTetra flags.
+// The halves get opposite mirrorHalf flags.
 function markChiralHalves(cells: CellPolygon[], lines: Line2D[], rotOps: number[][]): void {
   const roots = groupBySymmetry(cells, lines, rotOps)
   const typeRoots = new Map<number, Set<number>>()
@@ -304,7 +304,7 @@ function markChiralHalves(cells: CellPolygon[], lines: Line2D[], rotOps: number[
   }
   for (let i = 0; i < cells.length; i++) {
     const s = typeRoots.get(cells[i].typeId)!
-    cells[i].inTetra = s.size === 2 && roots[i] === Math.min(...s)
+    cells[i].mirrorHalf = s.size === 2 && roots[i] === Math.min(...s)
   }
 }
 
@@ -490,7 +490,7 @@ export interface StellationMesh {
 export function buildMesh(
   selectedTypes: Set<number>,
   explodeFactor: number,
-  halfTypes?: ReadonlyMap<number, boolean>,  // typeId → required inTetra value (chiral half-orbits)
+  halfTypes?: ReadonlyMap<number, boolean>,  // typeId → required mirrorHalf value (chiral half-orbits)
   primedTypes?: ReadonlySet<number>,         // regions seen from underneath → explode with outer chunk
   visibleFaces?: ReadonlySet<number>,        // face-plane indices to render (default: all)
   poly: PolyId = 'icosa',
@@ -513,7 +513,7 @@ export function buildMesh(
 
   const selected = (cell: CellPolygon): boolean =>
     selectedTypes.has(cell.typeId) &&
-    (!halfTypes?.has(cell.typeId) || halfTypes.get(cell.typeId) === cell.inTetra)
+    (!halfTypes?.has(cell.typeId) || halfTypes.get(cell.typeId) === cell.mirrorHalf)
 
   // Closed-cell mode: the selection picks 3D chunks (the chunk each selected
   // facet explodes with), and every boundary facet of those chunks is drawn —

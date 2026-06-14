@@ -114,6 +114,14 @@ export class Renderer {
     buf: WebGLBuffer | null
   } = { mesh: null, src: null, mode: '', arr: null, buf: null }
 
+  // Reused scratch + GPU buffers for the per-frame translucent depth sort, so
+  // the blended path doesn't churn typed arrays and GL buffers every frame.
+  private sortCap = 0                          // capacity in vertices
+  private sortDepths: Float32Array | null = null
+  private sortOrder: Uint32Array | null = null
+  private sortScratch: { pos: Float32Array; norm: Float32Array; color: Float32Array } | null = null
+  private sortBufs: { pos: WebGLBuffer; norm: WebGLBuffer; color: WebGLBuffer } | null = null
+
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl', { alpha: true, antialias: true })
     if (!gl) throw new Error('WebGL not supported')
@@ -140,6 +148,27 @@ export class Renderer {
     if (!m) { m = new Map(); this.uniformLocs.set(prog, m) }
     if (!m.has(name)) m.set(name, this.gl.getUniformLocation(prog, name))
     return m.get(name)!
+  }
+
+  // Scratch arrays + GPU buffers for the translucent depth sort, grown to fit
+  // the current mesh and reused across frames.
+  private ensureSortScratch(vertexCount: number) {
+    const gl = this.gl
+    if (vertexCount > this.sortCap || !this.sortBufs) {
+      const tris = vertexCount / 3
+      this.sortDepths = new Float32Array(tris)
+      this.sortOrder = new Uint32Array(tris)
+      this.sortScratch = {
+        pos: new Float32Array(vertexCount * 3),
+        norm: new Float32Array(vertexCount * 3),
+        color: new Float32Array(vertexCount * 3),
+      }
+      if (!this.sortBufs) {
+        this.sortBufs = { pos: gl.createBuffer()!, norm: gl.createBuffer()!, color: gl.createBuffer()! }
+      }
+      this.sortCap = vertexCount
+    }
+    return { depths: this.sortDepths!, order: this.sortOrder!, scratch: this.sortScratch!, bufs: this.sortBufs! }
   }
 
   draw(mesh: StellationMesh, camera: Camera, state: RenderState, canvas: HTMLCanvasElement) {
@@ -258,34 +287,44 @@ export class Renderer {
 
     // Alpha blending is order-dependent: triangles must be drawn back to
     // front, or near-opaque back faces overwrite the front ones. Sort by
-    // view-space depth of triangle centroids every frame (transient buffers).
+    // view-space depth of triangle centroids every frame, reusing scratch
+    // arrays and GPU buffers (re-uploaded, not re-created, per frame).
     let posBuf = mc.pos!
     let normBuf = mc.norm!
-    const transient: WebGLBuffer[] = []
     if (translucent) {
       const triCount = mesh.count / 3
-      const depths = new Float32Array(triCount)
-      const p = mesh.positions
+      const s = this.ensureSortScratch(mesh.count)
+      const depths = s.depths, order = s.order, p = mesh.positions
       for (let t = 0; t < triCount; t++) {
         const b = t * 9
         depths[t] = mv[2]  * (p[b]   + p[b+3] + p[b+6])
                   + mv[6]  * (p[b+1] + p[b+4] + p[b+7])
                   + mv[10] * (p[b+2] + p[b+5] + p[b+8])
+        order[t] = t
       }
       // Camera looks down -z: most negative z = farthest, drawn first
-      const order = Array.from({ length: triCount }, (_, i) => i)
-        .sort((a, b) => depths[a] - depths[b])
-      const sortTris = (src: Float32Array) => {
-        const dst = new Float32Array(src.length)
-        for (let i = 0; i < triCount; i++) dst.set(src.subarray(order[i]*9, order[i]*9 + 9), i*9)
-        return dst
+      const ord = order.subarray(0, triCount)
+      ord.sort((a, b) => depths[a] - depths[b])
+      const gather = (src: Float32Array, dst: Float32Array) => {
+        for (let i = 0; i < triCount; i++) {
+          const from = ord[i] * 9, to = i * 9
+          for (let k = 0; k < 9; k++) dst[to + k] = src[from + k]
+        }
       }
-      posBuf = createBuf(gl, sortTris(mesh.positions))
-      normBuf = createBuf(gl, sortTris(mesh.normals))
-      transient.push(posBuf, normBuf)
+      const view = (a: Float32Array) => a.subarray(0, mesh.count * 3)
+      gather(mesh.positions, s.scratch.pos)
+      gather(mesh.normals, s.scratch.norm)
+      gl.bindBuffer(gl.ARRAY_BUFFER, s.bufs.pos)
+      gl.bufferData(gl.ARRAY_BUFFER, view(s.scratch.pos), gl.DYNAMIC_DRAW)
+      gl.bindBuffer(gl.ARRAY_BUFFER, s.bufs.norm)
+      gl.bufferData(gl.ARRAY_BUFFER, view(s.scratch.norm), gl.DYNAMIC_DRAW)
+      posBuf = s.bufs.pos
+      normBuf = s.bufs.norm
       if (colorArr) {
-        colorBuf = createBuf(gl, sortTris(colorArr))
-        transient.push(colorBuf)
+        gather(colorArr, s.scratch.color)
+        gl.bindBuffer(gl.ARRAY_BUFFER, s.bufs.color)
+        gl.bufferData(gl.ARRAY_BUFFER, view(s.scratch.color), gl.DYNAMIC_DRAW)
+        colorBuf = s.bufs.color
       }
     }
 
@@ -342,8 +381,6 @@ export class Renderer {
     if (wire) gl.disable(gl.POLYGON_OFFSET_FILL)
 
     if (wire && !translucent) drawEdges()
-
-    for (const b of transient) gl.deleteBuffer(b)
   }
 
   destroy() {
@@ -354,6 +391,11 @@ export class Renderer {
     const mc = this.meshCache
     gl.deleteBuffer(mc.pos); gl.deleteBuffer(mc.norm); gl.deleteBuffer(mc.edge)
     gl.deleteBuffer(this.colorCache.buf)
+    if (this.sortBufs) {
+      gl.deleteBuffer(this.sortBufs.pos)
+      gl.deleteBuffer(this.sortBufs.norm)
+      gl.deleteBuffer(this.sortBufs.color)
+    }
   }
 }
 

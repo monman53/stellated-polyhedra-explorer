@@ -64,7 +64,7 @@
           <span>Closed cells</span>
         </label>
         <label class="toggle-row" title="Show a cube cut by every face plane — explode to scatter the pieces">
-          <input type="checkbox" v-model="state.explodeAll" />
+          <input type="checkbox" v-model="state.blockView" />
           <span>Block</span>
         </label>
         <label class="toggle-row" title="Hide whole cells beyond the reference face's plane, keeping the centre side">

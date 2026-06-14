@@ -13,7 +13,7 @@
           :visibleFaces="state.visibleFaces"
           :explodeFactor="state.explodeFactor"
           :closeCells="state.closeCells"
-          :block="state.explodeAll"
+          :block="state.blockView"
           :faceCut="state.faceCut"
           :autoRotate="state.autoRotate"
           @toggleAutoRotate="state.autoRotate = !state.autoRotate"
@@ -132,7 +132,7 @@
               :visibleFaces="state.visibleFaces"
               :explodeFactor="state.explodeFactor"
               :closeCells="state.closeCells"
-              :block="state.explodeAll"
+              :block="state.blockView"
               :faceCut="state.faceCut"
               :autoRotate="state.autoRotate"
             />

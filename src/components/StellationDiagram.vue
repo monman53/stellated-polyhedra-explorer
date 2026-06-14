@@ -69,7 +69,7 @@ const props = defineProps<{
   numTypes: number
   background: string
 }>()
-const emit = defineEmits<{ toggleHalf: [typeId: number, inTetra: boolean] }>()
+const emit = defineEmits<{ toggleHalf: [typeId: number, mirrorHalf: boolean] }>()
 
 const data = computed(() => getStellationData(props.poly))
 
@@ -238,8 +238,8 @@ function toPoints(verts: Vec2[]): string {
   return verts.map(v => rot(v)).map(([x,y]) => `${x},${y}`).join(' ')
 }
 
-function cellFill(cell: { typeId: number; inTetra: boolean }) {
-  if (!isHalfSelected(cell.typeId, cell.inTetra)) {
+function cellFill(cell: { typeId: number; mirrorHalf: boolean }) {
+  if (!isHalfSelected(cell.typeId, cell.mirrorHalf)) {
     return props.background === 'white' ? '#ddd8' : '#1a1a2a'
   }
   const t = cell.typeId, base = t * 3
@@ -254,7 +254,7 @@ function cellStroke(cell: { typeId: number }) {
 }
 
 // Interaction: click/tap = toggle; drag/slide = fill or clear depending on start cell state
-// Toggling operates on half-orbits: (typeId, inTetra) — splittable orbits' halves are independent.
+// Toggling operates on half-orbits: (typeId, mirrorHalf) — splittable orbits' halves are independent.
 const dragging = ref(false)
 let wasDrag = false
 let dragFill = true  // true = fill mode, false = clear mode (set on drag start)
@@ -262,7 +262,7 @@ let dragOrigin: [number, number] = [0, 0]
 let lastToggled = ''
 const DRAG_PX2 = 25  // 5px threshold to distinguish click from drag
 
-function getCellAtPoint(svgEl: SVGSVGElement, x: number, y: number): { typeId: number; inTetra: boolean } | null {
+function getCellAtPoint(svgEl: SVGSVGElement, x: number, y: number): { typeId: number; mirrorHalf: boolean } | null {
   const pt = svgEl.createSVGPoint()
   pt.x = x; pt.y = y
   const svgPt = pt.matrixTransform(svgEl.getScreenCTM()!.inverse())
@@ -273,10 +273,10 @@ function getCellAtPoint(svgEl: SVGSVGElement, x: number, y: number): { typeId: n
   return null
 }
 
-function isHalfSelected(typeId: number, inTetra: boolean): boolean {
+function isHalfSelected(typeId: number, mirrorHalf: boolean): boolean {
   if (!props.selectedTypes.has(typeId)) return false
   const h = props.halfTypes.get(typeId)
-  return h === undefined || h === inTetra
+  return h === undefined || h === mirrorHalf
 }
 
 function pointInPolygon([px, py]: Vec2, verts: Vec2[]): boolean {
@@ -292,7 +292,7 @@ function startDrag(svgEl: SVGSVGElement, x: number, y: number) {
   dragging.value = true; wasDrag = false; lastToggled = ''
   dragOrigin = [x, y]
   const c = getCellAtPoint(svgEl, x, y)
-  dragFill = !c || !isHalfSelected(c.typeId, c.inTetra)
+  dragFill = !c || !isHalfSelected(c.typeId, c.mirrorHalf)
 }
 function moveDrag(svgEl: SVGSVGElement, x: number, y: number, ox: number, oy: number) {
   if (!dragging.value) return
@@ -301,11 +301,11 @@ function moveDrag(svgEl: SVGSVGElement, x: number, y: number, ox: number, oy: nu
   wasDrag = true
   const c = getCellAtPoint(svgEl, x, y)
   if (!c) return
-  const key = `${c.typeId}:${c.inTetra}`
+  const key = `${c.typeId}:${c.mirrorHalf}`
   if (key === lastToggled) return
-  const sel = isHalfSelected(c.typeId, c.inTetra)
+  const sel = isHalfSelected(c.typeId, c.mirrorHalf)
   if ((dragFill && !sel) || (!dragFill && sel)) {
-    emit('toggleHalf', c.typeId, c.inTetra)
+    emit('toggleHalf', c.typeId, c.mirrorHalf)
     lastToggled = key
   }
 }
@@ -315,7 +315,7 @@ function onMouseMove(e: MouseEvent) { moveDrag(e.currentTarget as SVGSVGElement,
 function onMouseUp(e: MouseEvent) {
   if (dragging.value && !wasDrag) {
     const c = getCellAtPoint(e.currentTarget as SVGSVGElement, e.clientX, e.clientY)
-    if (c) emit('toggleHalf', c.typeId, c.inTetra)
+    if (c) emit('toggleHalf', c.typeId, c.mirrorHalf)
   }
   dragging.value = false; wasDrag = false
 }
@@ -350,7 +350,7 @@ function onTouchEnd(e: TouchEvent) {
   if (dragging.value && !wasDrag) {
     const touch = e.changedTouches[0]
     const c = getCellAtPoint(e.currentTarget as SVGSVGElement, touch.clientX, touch.clientY)
-    if (c) emit('toggleHalf', c.typeId, c.inTetra)
+    if (c) emit('toggleHalf', c.typeId, c.mirrorHalf)
   }
   dragging.value = false; wasDrag = false
 }
